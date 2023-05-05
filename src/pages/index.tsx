@@ -1,80 +1,91 @@
+import { GetServerSideProps, GetStaticProps } from "next";
 import Image from "next/image";
 import { useKeenSlider } from "keen-slider/react";
 
 import { HomeContainer, Product } from "@/styles/pages/home";
+import { priceFormatter } from "@/utils/formatter";
+import { stripe } from "@/lib/stripe";
+import { Stripe } from "stripe";
 
 import "keen-slider/keen-slider.min.css";
 
-import cam1 from "../assets/cam1.png";
-import cam2 from "../assets/cam2.png";
-import cam3 from "../assets/cam3.png";
+interface HomeProps {
+  products: {
+    id: string;
+    name: string;
+    imageUrl: string;
+    price: number;
+  }[];
+}
 
-export default function Home() {
+export default function Home(props: HomeProps) {
+  const { products } = props;
   const [sliderRef] = useKeenSlider({
     slides: {
-      perView: 4,
+      perView: 3,
       spacing: 48,
     },
   });
   return (
     <HomeContainer ref={sliderRef} className="keen-slider">
-      <Product className="keen-slider__slide">
-        <Image src={cam1} width={520} height={480} alt="" />
+      {products.map((product) => {
+        return (
+          <Product key={product.id} className="keen-slider__slide">
+            <Image src={product.imageUrl} width={520} height={480} alt="product-image" />
 
-        <footer>
-          <strong>Camiseta X</strong>
-          <span>R$ 79,90</span>
-        </footer>
-      </Product>
-
-      <Product className="keen-slider__slide">
-        <Image src={cam2} width={520} height={480} alt="" />
-
-        <footer>
-          <strong>Camiseta X</strong>
-          <span>R$ 79,90</span>
-        </footer>
-      </Product>
-      <Product className="keen-slider__slide">
-        <Image src={cam3} width={520} height={480} alt="" />
-
-        <footer>
-          <strong>Camiseta 3</strong>
-          <span>R$ 79,90</span>
-        </footer>
-      </Product>
-      <Product className="keen-slider__slide">
-        <Image src={cam3} width={520} height={480} alt="" />
-
-        <footer>
-          <strong>Camiseta 3</strong>
-          <span>R$ 79,90</span>
-        </footer>
-      </Product>
-      <Product className="keen-slider__slide">
-        <Image src={cam3} width={520} height={480} alt="" />
-
-        <footer>
-          <strong>Camiseta 3</strong>
-          <span>R$ 79,90</span>
-        </footer>
-      </Product>
-      <Product className="keen-slider__slide">
-        <Image src={cam2} width={520} height={480} alt="" />
-
-        <footer>
-          <strong>Camiseta 3</strong>
-          <span>R$ 79,90</span>
-        </footer>
-      </Product>
-      <Product className="keen-slider__slide">
-        <Image src={cam2} width={520} height={480} alt="" />
-
-        <footer>
-          <strong>Camiseta 3</strong>
-          <span>R$ 79,90</span>
-        </footer>
-      </Product>
+            <footer>
+              <strong>{product.name}</strong>
+              <span>{product.price}</span>
+            </footer>
+          </Product>
+        );
+      })}
     </HomeContainer>
   );
 }
+
+// export const getServerSideProps: GetServerSideProps = async () => {
+//   const { data } = await stripe.products.list({
+//     expand: ["data.default_price"],
+//   });
+
+//   const products = data.map((product) => {
+//     const price = product.default_price as Stripe.Price;
+
+//     const checkedPrice = price.unit_amount ? price.unit_amount / 100 : 0;
+
+//     return {
+//       id: product.id,
+//       name: product.name,
+//       imageUrl: product.images[0],
+//       price: checkedPrice,
+//     };
+//   });
+//   return {
+//     props: { products },
+//   };
+// };
+export const getStaticProps: GetStaticProps = async () => {
+  const { data } = await stripe.products.list({
+    expand: ["data.default_price"],
+  });
+
+  const products = data.map((product) => {
+    const price = product.default_price as Stripe.Price;
+
+    const checkedPrice = price.unit_amount
+      ? priceFormatter(price.unit_amount / 100)
+      : 0;
+
+    return {
+      id: product.id,
+      name: product.name,
+      imageUrl: product.images[0],
+      price: checkedPrice,
+    };
+  });
+  return {
+    props: { products },
+    revalidate: 60 * 60 * 2, // 2 hours
+  };
+};

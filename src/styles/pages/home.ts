@@ -21,7 +21,9 @@ export const Product = styled('a', {
     justifyContent: 'center',
 
     img: {
-        objectFit: 'cover'
+        objectFit: 'cover',
+        width: 'auto',
+        height: 'auto',
     },
 
     footer: {
