@@ -1,5 +1,6 @@
 import { GetServerSideProps, GetStaticProps } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { useKeenSlider } from "keen-slider/react";
 
 import { HomeContainer, Product } from "@/styles/pages/home";
@@ -14,7 +15,7 @@ interface HomeProps {
     id: string;
     name: string;
     imageUrl: string;
-    price: number;
+    price: string;
   }[];
 }
 
@@ -30,41 +31,32 @@ export default function Home(props: HomeProps) {
     <HomeContainer ref={sliderRef} className="keen-slider">
       {products.map((product) => {
         return (
-          <Product key={product.id} className="keen-slider__slide">
-            <Image src={product.imageUrl} width={520} height={480} alt="product-image" />
+          // prefetch false, evita que o next carregue a página para o onde o link leva
+          <Link
+            href={`/product/${product.id}`}
+            key={product.id}
+            prefetch={false}
+          >
+            <Product className="keen-slider__slide">
+              <Image
+                src={product.imageUrl}
+                width={520}
+                height={480}
+                alt="product-image"
+              />
 
-            <footer>
-              <strong>{product.name}</strong>
-              <span>{product.price}</span>
-            </footer>
-          </Product>
+              <footer>
+                <strong>{product.name}</strong>
+                <span>{product.price}</span>
+              </footer>
+            </Product>
+          </Link>
         );
       })}
     </HomeContainer>
   );
 }
 
-// export const getServerSideProps: GetServerSideProps = async () => {
-//   const { data } = await stripe.products.list({
-//     expand: ["data.default_price"],
-//   });
-
-//   const products = data.map((product) => {
-//     const price = product.default_price as Stripe.Price;
-
-//     const checkedPrice = price.unit_amount ? price.unit_amount / 100 : 0;
-
-//     return {
-//       id: product.id,
-//       name: product.name,
-//       imageUrl: product.images[0],
-//       price: checkedPrice,
-//     };
-//   });
-//   return {
-//     props: { products },
-//   };
-// };
 export const getStaticProps: GetStaticProps = async () => {
   const { data } = await stripe.products.list({
     expand: ["data.default_price"],
@@ -89,3 +81,25 @@ export const getStaticProps: GetStaticProps = async () => {
     revalidate: 60 * 60 * 2, // 2 hours
   };
 };
+
+// export const getServerSideProps: GetServerSideProps = async () => {
+//   const { data } = await stripe.products.list({
+//     expand: ["data.default_price"],
+//   });
+
+//   const products = data.map((product) => {
+//     const price = product.default_price as Stripe.Price;
+
+//     const checkedPrice = price.unit_amount ? price.unit_amount / 100 : 0;
+
+//     return {
+//       id: product.id,
+//       name: product.name,
+//       imageUrl: product.images[0],
+//       price: checkedPrice,
+//     };
+//   });
+//   return {
+//     props: { products },
+//   };
+// };
