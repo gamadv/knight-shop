@@ -10,6 +10,7 @@ import {
   ProductDetails,
 } from "@/styles/pages/product";
 import { priceFormatter } from "@/utils/formatter";
+import Head from "next/head";
 
 interface ProductProps {
   product: {
@@ -23,15 +24,16 @@ interface ProductProps {
 }
 
 export default function ProductPage({ product }: ProductProps) {
-  const [isCreatingCheckoutSession, setIsCreatingCheckoutSession] = useState(false);
+  const [isCreatingCheckoutSession, setIsCreatingCheckoutSession] =
+    useState(false);
 
   async function handleBuyButton() {
     try {
       setIsCreatingCheckoutSession(true);
 
-      const response = await axios.post('/api/checkout', {
+      const response = await axios.post("/api/checkout", {
         priceId: product.defaultPriceId,
-      })
+      });
 
       const { checkoutUrl } = response.data;
 
@@ -39,24 +41,35 @@ export default function ProductPage({ product }: ProductProps) {
     } catch (err) {
       setIsCreatingCheckoutSession(false);
 
-      alert('Falha ao redirecionar ao checkout!')
+      alert("Falha ao redirecionar ao checkout!");
     }
   }
   return (
-    <ProductContainer>
-      <ImageContainer>
-        <Image src={product?.imageUrl} width={520} height={480} alt="" />
-      </ImageContainer>
+    <>
+      <Head>
+        <title>{product.name} | Ignite Shop</title>
+      </Head>
 
-      <ProductDetails>
-        <h1>{product.name}</h1>
-        <span>{product.price}</span>
+      <ProductContainer>
+        <ImageContainer>
+          <Image src={product?.imageUrl} width={520} height={480} alt="" />
+        </ImageContainer>
 
-        <p>{product.description}</p>
+        <ProductDetails>
+          <h1>{product.name}</h1>
+          <span>{product.price}</span>
 
-        <button disabled={isCreatingCheckoutSession} onClick={handleBuyButton}>Comprar agora</button>
-      </ProductDetails>
-    </ProductContainer>
+          <p>{product.description}</p>
+
+          <button
+            disabled={isCreatingCheckoutSession}
+            onClick={handleBuyButton}
+          >
+            Comprar agora
+          </button>
+        </ProductDetails>
+      </ProductContainer>
+    </>
   );
 }
 
